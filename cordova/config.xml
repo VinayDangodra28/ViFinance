@@ -11,7 +11,7 @@
 
     <!-- App Icons (point to res/icon for Cordova compatibility) -->
     <icon src="res/icon/icon-48x48.png" width="48" height="48" />
-    <icon src="res/icon/icon-72x72.png" width="72" height="72" />
+    <!-- <icon src="res/icon/icon-72x72.png" width="72" height="72" /> -->
     <icon src="res/icon/icon-96x96.png" width="96" height="96" />
     <icon src="res/icon/icon-144x144.png" width="144" height="144" />
     <icon src="res/icon/icon-192x192.png" width="192" height="192" />
