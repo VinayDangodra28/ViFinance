@@ -11,16 +11,12 @@
 
     <!-- App Icons (point to res/icon for Cordova compatibility) -->
     <icon src="res/icon/icon-48x48.png" width="48" height="48" />
-    <!-- <icon src="res/icon/icon-72x72.png" width="72" height="72" /> -->
+    <icon src="res/icon/icon-72x72.png" width="72" height="72" />
     <icon src="res/icon/icon-96x96.png" width="96" height="96" />
     <icon src="res/icon/icon-144x144.png" width="144" height="144" />
     <icon src="res/icon/icon-192x192.png" width="192" height="192" />
     <icon src="res/icon/icon-512x512.png" width="512" height="512" />
 
-    <!-- Splash Screens (migrated to preference for modern Cordova) -->
-    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/screen/splash-1024x1024.png" />
-    <preference name="SplashScreen" value="res/screen/splash-1024x1024.png" />
-    <preference name="SplashScreenBackgroundColor" value="#ffffff" />
-    <preference name="ShowSplashScreen" value="true" />
-    <preference name="AutoHideSplashScreen" value="true" />
+    <!-- Splash Screens (point to public/res/screen for Vite/Cordova compatibility) -->
+    <splash src="../public/res/screen/splash-1024x1024.png" width="1024" height="1024" />
 </widget>
