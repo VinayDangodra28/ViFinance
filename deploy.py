@@ -10,6 +10,7 @@ def run_command(command, cwd=None):
     if result.returncode != 0:
         raise Exception(f"❌ Command failed: {command}")
 
+
 def get_package_name(config_path):
     try:
         tree = ET.parse(config_path)
@@ -21,13 +22,12 @@ def get_package_name(config_path):
         return package_name
     except Exception as e:
         raise Exception(f"❌ Error reading config.xml: {e}")
-    
 
 
 def install_apk_to_device(apk_path):
     print("📱 Installing APK to connected Android device...")
     try:
-        run_command(f'adb install -r "{apk_path}"')  # -r for reinstall if already installed
+        run_command(f'adb install -r "{apk_path}"')
         print("✅ APK installed successfully!")
     except Exception as e:
         print("❌ Failed to install APK:", e)
@@ -60,6 +60,7 @@ def git_commit(repo_path):
     print("✅ Changes committed.")
     return True
 
+
 def find_apk(cordova_path):
     apk_dir = os.path.join(cordova_path, "platforms", "android", "app", "build", "outputs", "apk", "debug")
     if not os.path.exists(apk_dir):
@@ -73,7 +74,8 @@ def find_apk(cordova_path):
 
     raise FileNotFoundError("❌ No APK found in debug folder.")
 
-def open_whatsapp_and_apk_folder(apk_path):
+
+def open_apk_folder_and_whatsapp(apk_path):
     try:
         subprocess.Popen(["cmd", "/c", "start", "whatsapp:"])
         print("🟢 Opened WhatsApp Desktop.")
@@ -86,30 +88,25 @@ def open_whatsapp_and_apk_folder(apk_path):
     subprocess.run(["explorer", apk_folder])
     print(f"📂 Opened APK folder: {apk_folder}")
 
+
 def main():
-    # Automatically take the current directory
     project_path = os.getcwd()
-
-
-
-
-    
     print(f"📁 Current project directory: {project_path}")
 
     cordova_path = os.path.join(project_path, "cordova")
-    
-    config_path = os.path.join(cordova_path, "config.xml")
-    package_name = get_package_name(config_path)
     if not os.path.exists(cordova_path):
         print("❌ 'cordova' folder not found inside the current directory.")
         return
 
-    # Git commit
+    config_path = os.path.join(cordova_path, "config.xml")
+    package_name = get_package_name(config_path)
+
     git_commit(project_path)
 
-    deploy = input("\nDo you want to build and deploy APK? (y/n): ").strip().lower()
-    if deploy != "y":
-        print("🚫 Build skipped.")
+    deploy_choice = input("\nWhat would you like to do?\n1️⃣ Install on connected device\n2️⃣ Just open APK folder\nEnter choice (1 or 2): ").strip()
+
+    if deploy_choice not in ["1", "2"]:
+        print("🚫 Invalid choice. Exiting.")
         return
 
     print("🏗️ Building Vite project...")
@@ -121,14 +118,14 @@ def main():
     print("🔍 Locating APK...")
     apk_path = find_apk(cordova_path)
 
-    print("📲 Installing APK directly to device...")
-    install_apk_to_device(apk_path)
-
-    print("🚀 Launching the app...")
-    launch_app_on_device(package_name)
-
+    if deploy_choice == "1":
+        install_apk_to_device(apk_path)
+        launch_app_on_device(package_name)
+    else:
+        open_apk_folder_and_whatsapp(apk_path)
 
     print("\n✅ Done!")
+
 
 if __name__ == "__main__":
     main()
