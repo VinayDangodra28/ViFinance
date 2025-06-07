@@ -1,12 +1,27 @@
 import os
 import subprocess
 import time
+import xml.etree.ElementTree as ET
+
 
 def run_command(command, cwd=None):
     print(f">>> {command}")
     result = subprocess.run(command, shell=True, cwd=cwd)
     if result.returncode != 0:
         raise Exception(f"❌ Command failed: {command}")
+
+def get_package_name(config_path):
+    try:
+        tree = ET.parse(config_path)
+        root = tree.getroot()
+        package_name = root.attrib.get("id")
+        if not package_name:
+            raise ValueError("❌ Package name not found in config.xml")
+        print(f"📦 Found package name: {package_name}")
+        return package_name
+    except Exception as e:
+        raise Exception(f"❌ Error reading config.xml: {e}")
+    
 
 
 def install_apk_to_device(apk_path):
@@ -16,6 +31,15 @@ def install_apk_to_device(apk_path):
         print("✅ APK installed successfully!")
     except Exception as e:
         print("❌ Failed to install APK:", e)
+
+
+def launch_app_on_device(package_name):
+    print(f"🚀 Launching app {package_name} on device...")
+    try:
+        run_command(f'adb shell monkey -p {package_name} -c android.intent.category.LAUNCHER 1')
+        print("✅ App launched successfully!")
+    except Exception as e:
+        print(f"❌ Failed to launch app: {e}")
 
 
 def git_commit(repo_path):
@@ -65,9 +89,17 @@ def open_whatsapp_and_apk_folder(apk_path):
 def main():
     # Automatically take the current directory
     project_path = os.getcwd()
+
+
+
+
+    
     print(f"📁 Current project directory: {project_path}")
 
     cordova_path = os.path.join(project_path, "cordova")
+    
+    config_path = os.path.join(cordova_path, "config.xml")
+    package_name = get_package_name(config_path)
     if not os.path.exists(cordova_path):
         print("❌ 'cordova' folder not found inside the current directory.")
         return
@@ -91,6 +123,9 @@ def main():
 
     print("📲 Installing APK directly to device...")
     install_apk_to_device(apk_path)
+
+    print("🚀 Launching the app...")
+    launch_app_on_device(package_name)
 
 
     print("\n✅ Done!")
