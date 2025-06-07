@@ -27,7 +27,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
 
   const navLinks = [
     { path: '/', label: 'Accounts' },
-    { path: '/expenses', label: 'Expenses & Goals' },
+    // { path: '/expenses', label: 'Expenses & Goals' },
     { path: '/analytics', label: 'Analytics' }
   ];
 

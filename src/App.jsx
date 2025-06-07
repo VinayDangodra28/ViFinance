@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import AccountListPage from "./components/AccountListPage";
 import AccountPage from "./components/AccountPage";
-import ExpensesPage from "./components/ExpensesPage";
+// import ExpensesPage from "./components/ExpensesPage";
 import Navbar from "./components/Navbar";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -39,7 +39,7 @@ export default function App() {
       id: Date.now(),
       name,
       transactions: [],
-      expenses: []
+      // expenses: []
     };
     setAccounts([newAccount, ...accounts]);
   };
@@ -79,110 +79,110 @@ export default function App() {
     );
   };
 
-  const updateExpenses = (accountId, expense) => {
-    setAccounts((prev) => {
-      // If the expense already exists, update it
-      const accountWithExpense = prev.find(acc => 
-        acc.expenses?.some(exp => exp.id === expense.id)
-      );
+  // const updateExpenses = (accountId, expense) => {
+  //   setAccounts((prev) => {
+  //     // If the expense already exists, update it
+  //     const accountWithExpense = prev.find(acc => 
+  //       acc.expenses?.some(exp => exp.id === expense.id)
+  //     );
 
-      if (accountWithExpense) {
-        // Remove the expense from its current account
-        const updatedAccounts = prev.map(acc => ({
-          ...acc,
-          expenses: (acc.expenses || []).filter(exp => exp.id !== expense.id)
-        }));
+  //     if (accountWithExpense) {
+  //       // Remove the expense from its current account
+  //       const updatedAccounts = prev.map(acc => ({
+  //         ...acc,
+  //         expenses: (acc.expenses || []).filter(exp => exp.id !== expense.id)
+  //       }));
 
-        // Add the expense to the new account
-        return updatedAccounts.map(acc =>
-          acc.id === parseInt(accountId)
-            ? {
-                ...acc,
-                expenses: [...(acc.expenses || []), expense]
-              }
-            : acc
-        );
-      }
+  //       // Add the expense to the new account
+  //       return updatedAccounts.map(acc =>
+  //         acc.id === parseInt(accountId)
+  //           ? {
+  //               ...acc,
+  //               expenses: [...(acc.expenses || []), expense]
+  //             }
+  //           : acc
+  //       );
+  //     }
 
-      // If it's a new expense, just add it to the account
-      return prev.map((acc) =>
-        acc.id === parseInt(accountId)
-          ? {
-              ...acc,
-              expenses: [...(acc.expenses || []), expense],
-            }
-          : acc
-      );
-    });
-  };
+  //     // If it's a new expense, just add it to the account
+  //     return prev.map((acc) =>
+  //       acc.id === parseInt(accountId)
+  //         ? {
+  //             ...acc,
+  //             expenses: [...(acc.expenses || []), expense],
+  //           }
+  //         : acc
+  //     );
+  //   });
+  // };
 
-  const getAccountExpensesDiff = (accountId) => {
-    const account = accounts.find(acc => acc.id === parseInt(accountId));
-    if (!account) return 0;
+  // const getAccountExpensesDiff = (accountId) => {
+  //   const account = accounts.find(acc => acc.id === parseInt(accountId));
+  //   if (!account) return 0;
 
-    const currentDate = new Date();
-    const currentBalance = account.transactions.reduce((sum, trans) => {
-      return sum + (trans.type === 'credit' ? trans.amount : -trans.amount);
-    }, 0);
+  //   const currentDate = new Date();
+  //   const currentBalance = account.transactions.reduce((sum, trans) => {
+  //     return sum + (trans.type === 'credit' ? trans.amount : -trans.amount);
+  //   }, 0);
 
-    // Calculate pending one-time expenses/income
-    const pendingOneTime = account.expenses?.reduce((sum, exp) => {
-      if (!exp.recurring && exp.status === 'pending') {
-        const dueDate = new Date(exp.dueDate);
-        if (dueDate >= currentDate) {
-          return sum + (exp.type === 'expense' ? -exp.amount : exp.amount);
-        }
-      }
-      return sum;
-    }, 0) || 0;
+  //   // Calculate pending one-time expenses/income
+  //   const pendingOneTime = account.expenses?.reduce((sum, exp) => {
+  //     if (!exp.recurring && exp.status === 'pending') {
+  //       const dueDate = new Date(exp.dueDate);
+  //       if (dueDate >= currentDate) {
+  //         return sum + (exp.type === 'expense' ? -exp.amount : exp.amount);
+  //       }
+  //     }
+  //     return sum;
+  //   }, 0) || 0;
 
-    // Calculate pending recurring transactions
-    const pendingRecurring = account.expenses?.reduce((sum, exp) => {
-      if (exp.recurring) {
-        const startDate = new Date(exp.date);
-        const endDate = exp.recurring.hasEndDate ? new Date(exp.recurring.endDate) : null;
+  //   // Calculate pending recurring transactions
+  //   const pendingRecurring = account.expenses?.reduce((sum, exp) => {
+  //     if (exp.recurring) {
+  //       const startDate = new Date(exp.date);
+  //       const endDate = exp.recurring.hasEndDate ? new Date(exp.recurring.endDate) : null;
         
-        // Only consider if start date is in the future or recurring is ongoing
-        if (startDate <= currentDate && (!endDate || endDate >= currentDate)) {
-          // Calculate next occurrence based on recurring type
-          let nextDate = new Date(startDate);
-          if (exp.recurring.type === 'monthly') {
-            // Find next monthly occurrence
-            while (nextDate <= currentDate) {
-              nextDate.setMonth(nextDate.getMonth() + 1);
-            }
-          } else {
-            // Find next yearly occurrence
-            while (nextDate <= currentDate) {
-              nextDate.setFullYear(nextDate.getFullYear() + 1);
-            }
-          }
+  //       // Only consider if start date is in the future or recurring is ongoing
+  //       if (startDate <= currentDate && (!endDate || endDate >= currentDate)) {
+  //         // Calculate next occurrence based on recurring type
+  //         let nextDate = new Date(startDate);
+  //         if (exp.recurring.type === 'monthly') {
+  //           // Find next monthly occurrence
+  //           while (nextDate <= currentDate) {
+  //             nextDate.setMonth(nextDate.getMonth() + 1);
+  //           }
+  //         } else {
+  //           // Find next yearly occurrence
+  //           while (nextDate <= currentDate) {
+  //             nextDate.setFullYear(nextDate.getFullYear() + 1);
+  //           }
+  //         }
           
-          // If next occurrence is within end date (if any), include it
-          if (!endDate || nextDate <= endDate) {
-            return sum + (exp.type === 'debit' ? -exp.amount : exp.amount);
-          }
-        }
-      }
-      return sum;
-    }, 0) || 0;
+  //         // If next occurrence is within end date (if any), include it
+  //         if (!endDate || nextDate <= endDate) {
+  //           return sum + (exp.type === 'debit' ? -exp.amount : exp.amount);
+  //         }
+  //       }
+  //     }
+  //     return sum;
+  //   }, 0) || 0;
 
-    return currentBalance + pendingOneTime + pendingRecurring;
-  };
+  //   return currentBalance + pendingOneTime + pendingRecurring;
+  // };
 
-  const deleteExpense = (accountId, expenseId) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === parseInt(accountId)
-          ? {
-              ...acc,
-              expenses: (acc.expenses || []).filter((exp) => exp.id !== expenseId),
-            }
-          : acc
-      )
-    );
-    toast.success('Item deleted successfully!');
-  };
+  // const deleteExpense = (accountId, expenseId) => {
+  //   setAccounts((prev) =>
+  //     prev.map((acc) =>
+  //       acc.id === parseInt(accountId)
+  //         ? {
+  //             ...acc,
+  //             expenses: (acc.expenses || []).filter((exp) => exp.id !== expenseId),
+  //           }
+  //         : acc
+  //     )
+  //   );
+  //   toast.success('Item deleted successfully!');
+  // };
 
   const processRecurringTransactions = () => {
     const currentDate = new Date();
@@ -298,7 +298,7 @@ export default function App() {
                 addAccount={addAccount}
                 deleteAccount={deleteAccount}
                 darkMode={darkMode}
-                getAccountExpensesDiff={getAccountExpensesDiff}
+                // getAccountExpensesDiff={getAccountExpensesDiff}
               />
             } 
           />
@@ -311,11 +311,11 @@ export default function App() {
                 deleteTransaction={deleteTransaction}
                 deleteAccount={deleteAccount}
                 darkMode={darkMode}
-                getAccountExpensesDiff={getAccountExpensesDiff}
+                // getAccountExpensesDiff={getAccountExpensesDiff}
               />
             } 
           />
-          <Route 
+          {/* <Route 
             path="/expenses" 
             element={
               <ExpensesPage
@@ -326,7 +326,7 @@ export default function App() {
                 darkMode={darkMode}
               />
             } 
-          />
+          /> */}
           <Route path="/analytics" element={<AnalyticsPage accounts={accounts} darkMode={darkMode} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

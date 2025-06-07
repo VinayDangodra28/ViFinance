@@ -4,7 +4,7 @@ import AccountForm from "./AccountForm";
 import Analytics from "./Analytics";
 import ConfirmationModal from "./ConfirmationModal";
 
-export default function AccountListPage({ accounts, addAccount, deleteAccount, darkMode, getAccountExpensesDiff }) {
+export default function AccountListPage({ accounts, addAccount, deleteAccount, darkMode }) {
   const navigate = useNavigate();
   const [accountToDelete, setAccountToDelete] = useState(null);
 
@@ -27,13 +27,11 @@ export default function AccountListPage({ accounts, addAccount, deleteAccount, d
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto">
       <AccountForm addAccount={addAccount} darkMode={darkMode} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
         {accounts.map((acc) => {
           const currentBalance = getAccountBalance(acc);
-          const balanceAfterExpenses = getAccountExpensesDiff(acc.id);
-          const hasPendingExpenses = currentBalance !== balanceAfterExpenses;
 
           return (
             <div 
@@ -56,15 +54,6 @@ export default function AccountListPage({ accounts, addAccount, deleteAccount, d
                         ₹{currentBalance.toLocaleString()}
                         <span className="text-sm font-normal ml-2 text-gray-500">Current Balance</span>
                       </p>
-                      {hasPendingExpenses && (
-                        <p className={`text-sm ${
-                          balanceAfterExpenses < currentBalance 
-                            ? 'text-red-400' 
-                            : 'text-green-400'
-                        }`}>
-                          After Expenses: ₹{balanceAfterExpenses.toLocaleString()}
-                        </p>
-                      )}
                     </div>
                   </button>
                   <button
@@ -76,16 +65,6 @@ export default function AccountListPage({ accounts, addAccount, deleteAccount, d
                     </svg>
                   </button>
                 </div>
-                {acc.expenses?.some(exp => exp.status === 'pending') && (
-                  <div className={`text-sm ${
-                    darkMode ? 'text-yellow-400' : 'text-yellow-600'
-                  } flex items-center mt-4`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    Pending expenses
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -100,11 +79,7 @@ export default function AccountListPage({ accounts, addAccount, deleteAccount, d
         onClose={() => setAccountToDelete(null)}
         onConfirm={handleConfirmDelete}
         title="Delete Account"
-        message={`Are you sure you want to delete the account "${accountToDelete?.name}"? This action cannot be undone.${
-          accountToDelete?.expenses?.some(exp => exp.status === 'pending')
-            ? ' This account has pending expenses/income that will also be deleted.'
-            : ''
-        }`}
+        message={`Are you sure you want to delete the account "${accountToDelete?.name}"? This action cannot be undone.`}
         darkMode={darkMode}
       />
     </div>
