@@ -17,16 +17,10 @@
     <icon src="res/icon/icon-192x192.png" width="192" height="192" />
     <icon src="res/icon/icon-512x512.png" width="512" height="512" />
 
-    <!-- Splash Screens (point to res/screen for Cordova compatibility) -->
-    <splash src="res/screen/splash-1024x1024.png" width="1024" height="1024" />
-    <platform name="android">
-        <splash src="res/screen/splash-1024x1024.png" density="port-xxhdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="port-xhdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="port-hdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="port-mdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="land-xxhdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="land-xhdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="land-hdpi" />
-        <splash src="res/screen/splash-1024x1024.png" density="land-mdpi" />
-    </platform>
+    <!-- Splash Screens (migrated to preference for modern Cordova) -->
+    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/screen/splash-1024x1024.png" />
+    <preference name="SplashScreen" value="res/screen/splash-1024x1024.png" />
+    <preference name="SplashScreenBackgroundColor" value="#ffffff" />
+    <preference name="ShowSplashScreen" value="true" />
+    <preference name="AutoHideSplashScreen" value="true" />
 </widget>
