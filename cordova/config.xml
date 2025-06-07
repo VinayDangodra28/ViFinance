@@ -17,6 +17,10 @@
     <icon src="../public/res/icon/icon-192x192.png" width="192" height="192" />
     <icon src="../public/res/icon/icon-512x512.png" width="512" height="512" />
 
-    <!-- Splash Screens (point to public/res/screen for Vite/Cordova compatibility) -->
-    <splash src="../public/res/screen/splash-1024x1024.png" width="1024" height="1024" />
+    <!-- Splash Screens (migrated to preference for modern Cordova) -->
+    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="../public/res/screen/splash-1024x1024.png" />
+    <preference name="SplashScreen" value="../public/res/screen/splash-1024x1024.png" />
+    <preference name="SplashScreenBackgroundColor" value="#ffffff" />
+    <preference name="ShowSplashScreen" value="true" />
+    <preference name="AutoHideSplashScreen" value="true" />
 </widget>
