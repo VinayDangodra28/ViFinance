@@ -8,6 +8,16 @@ def run_command(command, cwd=None):
     if result.returncode != 0:
         raise Exception(f"❌ Command failed: {command}")
 
+
+def install_apk_to_device(apk_path):
+    print("📱 Installing APK to connected Android device...")
+    try:
+        run_command(f'adb install -r "{apk_path}"')  # -r for reinstall if already installed
+        print("✅ APK installed successfully!")
+    except Exception as e:
+        print("❌ Failed to install APK:", e)
+
+
 def git_commit(repo_path):
     print("\n📝 GIT COMMIT STEP")
     commit_message = input("Enter git commit message (or leave blank to skip): ").strip()
@@ -79,8 +89,9 @@ def main():
     print("🔍 Locating APK...")
     apk_path = find_apk(cordova_path)
 
-    print("📲 Opening WhatsApp and APK folder...")
-    open_whatsapp_and_apk_folder(apk_path)
+    print("📲 Installing APK directly to device...")
+    install_apk_to_device(apk_path)
+
 
     print("\n✅ Done!")
 
