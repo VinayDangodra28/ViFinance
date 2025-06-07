@@ -1,0 +1,17 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+
+# Cordova generated files
+cordova/platforms/
+cordova/plugins/
+cordova/www/
+
+# Vite build output (not used, but safe)
+dist/
+build/
+
+# IDE/editor files
+.vscode/
+*.log
+.DS_Store
