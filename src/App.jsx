@@ -7,22 +7,21 @@ import Navbar from "./components/Navbar";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnalyticsPage from './components/AnalyticsPage';
+import storageModel from "./storageModel";
+import ChatPage from "./components/ChatPage";
+import LogsPage from "./components/LogsPage";
 
 export default function App() {
-  const [accounts, setAccounts] = useState(() => {
-    return JSON.parse(localStorage.getItem("accounts")) || [];
-  });
-  const [darkMode, setDarkMode] = useState(() => {
-    return JSON.parse(localStorage.getItem("darkMode")) || false;
-  });
+  const [accounts, setAccountsState] = useState(() => storageModel.getAccounts());
+  const [darkMode, setDarkModeState] = useState(() => storageModel.getDarkMode());
   const navigate = useNavigate();
 
   useEffect(() => {
-    localStorage.setItem("accounts", JSON.stringify(accounts));
+    // No need to setAccounts here, handled by model functions
   }, [accounts]);
 
   useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    storageModel.setDarkMode(darkMode);
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -31,52 +30,29 @@ export default function App() {
   }, [darkMode]);
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    setDarkModeState(!darkMode);
   };
 
   const addAccount = (name) => {
-    const newAccount = {
-      id: Date.now(),
-      name,
-      transactions: [],
-      // expenses: []
-    };
-    setAccounts([newAccount, ...accounts]);
+    const updated = storageModel.addAccount(name);
+    setAccountsState(updated);
   };
 
   const deleteAccount = (accountId) => {
-    setAccounts((prev) => prev.filter((acc) => acc.id !== accountId));
+    const updated = storageModel.deleteAccount(accountId);
+    setAccountsState(updated);
     toast.success('Account deleted successfully!');
     navigate('/');
   };
 
   const addTransaction = (accountId, transaction) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === parseInt(accountId)
-          ? {
-              ...acc,
-              transactions: [
-                { ...transaction, id: Date.now() },
-                ...acc.transactions,
-              ],
-            }
-          : acc
-      )
-    );
+    const updated = storageModel.addTransaction(accountId, transaction);
+    setAccountsState(updated);
   };
 
   const deleteTransaction = (accountId, transactionId) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === accountId
-          ? {
-            ...acc,
-            transactions: acc.transactions.filter((t) => t.id !== transactionId),
-          }
-          : acc
-      )
-    );
+    const updated = storageModel.deleteTransaction(accountId, transactionId);
+    setAccountsState(updated);
   };
 
   // const updateExpenses = (accountId, expense) => {
@@ -187,7 +163,7 @@ export default function App() {
   const processRecurringTransactions = () => {
     const currentDate = new Date();
     
-    setAccounts(prevAccounts => {
+    setAccountsState(prevAccounts => {
       let accountsUpdated = false;
       
       const updatedAccounts = prevAccounts.map(account => {
@@ -328,6 +304,8 @@ export default function App() {
             } 
           /> */}
           <Route path="/analytics" element={<AnalyticsPage accounts={accounts} darkMode={darkMode} />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/logs" element={<LogsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
