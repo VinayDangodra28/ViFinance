@@ -42,7 +42,26 @@ const logger = new FinanceLogger();
 // Strict JSON-only prompt
 const getGeminiPrompt = (message, context = null, accounts = null) => {
     const contextStr = context ? `Context: ${JSON.stringify(context)}` : "";
-    const accountsStr = accounts ? `Accounts: ${JSON.stringify(accounts)}` : "";
+    // Summarize accounts: id, name, total, last transaction
+    let accountsSummary = [];
+    if (accounts && Array.isArray(accounts)) {
+        accountsSummary = accounts.map(acc => {
+            const total = acc.transactions?.reduce((sum, t) => sum + (t.type === 'credit' ? t.amount : -t.amount), 0) || 0;
+            const lastTx = acc.transactions && acc.transactions.length > 0 ? acc.transactions[acc.transactions.length - 1] : null;
+            return {
+                id: acc.id,
+                name: acc.name,
+                total,
+                lastTransaction: lastTx ? {
+                    amount: lastTx.amount,
+                    type: lastTx.type,
+                    date: lastTx.date,
+                    note: lastTx.note
+                } : null
+            };
+        });
+    }
+    const accountsStr = accountsSummary.length > 0 ? JSON.stringify(accountsSummary) : "[]";
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
 
@@ -58,6 +77,7 @@ const getGeminiPrompt = (message, context = null, accounts = null) => {
         3. delete_account
         4. ask_user
         5. get_accounts
+        6. inform_user // Use this to provide any information, answer, or message to the user, even if not a question.
 
         Current date: ${formattedDate}
         Current accounts: ${accountsStr}
@@ -99,10 +119,22 @@ const getGeminiPrompt = (message, context = null, accounts = null) => {
           "isFriendPayment": boolean // Add this field
         }
 
-
         create_account:
-        {          "action": "create_account",
+        {          
+          "action": "create_account",
           "accountName": "string" // Name of the new account
+        }
+
+        ask_user:
+        {
+          "action": "ask_user",
+          "message": "string" // Ask the user for clarification or more info
+        }
+
+        inform_user:
+        {
+          "action": "inform_user",
+          "message": "string" // Provide any information, answer, or message to the user (not a question)
         }
 
         Important rules:
@@ -111,10 +143,6 @@ const getGeminiPrompt = (message, context = null, accounts = null) => {
            - One with type "expense" for the source account
            - One with type "income" for the destination account
            - Set "isFriendPayment": false for both
-        2. For a payment to a friend:
-           - Use ONE add_transaction action with type "expense"
-           - Set "isFriendPayment": true
-           - The note should clearly indicate it's a payment to a friend
         3. When the user mentions "friend" in the message, assume it's a payment to a friend unless they explicitly say it's a transfer between their own accounts
         4. For any transaction where the destination is not clearly one of the user's accounts, treat it as a payment to a friend`
             }]
@@ -248,6 +276,9 @@ export async function handleFinanceChat(userMessage, chatHistory = []) {
                             }
                             case "ask_user":
                                 actionSummaries.push(action.message || 'Requested clarification from user.');
+                                break;
+                            case "inform_user":
+                                actionSummaries.push(action.message || '');
                                 break;
                             case "get_accounts":
                                 actionSummaries.push('Fetched account list.');
