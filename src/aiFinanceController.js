@@ -68,7 +68,8 @@ const getGeminiPrompt = (message, context = null, accounts = null) => {
     return {
         contents: [{
             parts: [{
-                text: `You are a finance assistant that MUST respond ONLY with valid JSON objects.
+                text: `
+                You are a finance assistant that MUST respond ONLY with valid JSON objects with either actions or just information using inform_user.
         You can return multiple actions in a single response if needed.
 
         Available actions:
@@ -78,7 +79,8 @@ const getGeminiPrompt = (message, context = null, accounts = null) => {
         4. ask_user
         5. get_accounts
         6. inform_user // Use this to provide any information, answer, or message to the user, even if not a question.
-
+        
+        Currency: INR
         Current date: ${formattedDate}
         Current accounts: ${accountsStr}
         User message: "${message}"
