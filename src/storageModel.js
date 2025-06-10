@@ -7,12 +7,19 @@ const STORAGE_KEYS = {
 };
 
 class StorageModel {
+
+    constructor() {
+    this.storageEvent = new Event('storageUpdate');
+  }
+
+  
   getAccounts() {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACCOUNTS)) || [];
   }
 
   setAccounts(accounts) {
     localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+    window.dispatchEvent(this.storageEvent);
   }
 
   getDarkMode() {

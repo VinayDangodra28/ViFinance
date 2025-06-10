@@ -155,22 +155,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Accounts bar - show only if accounts exist */}
-      {accounts.length > 0 && (
-        <div className="fixed bottom-16 left-0 w-full bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-2 text-xs">
-          <div className="max-w-lg mx-auto flex flex-wrap gap-2 items-center">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Accounts:</span>
-            {accounts.map(account => (
-              <span
-                key={account.id}
-                className="bg-gray-200 dark:bg-gray-700 rounded-full px-3 py-1 text-xs font-medium text-gray-800 dark:text-gray-200"
-              >
-                {account.name} (ID: {account.id})
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      
 
       {/* Input form */}
       <form

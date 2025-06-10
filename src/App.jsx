@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { Routes, Route, useNavigate, Navigate,  useLocation } from "react-router-dom";
 import AccountListPage from "./components/AccountListPage";
 import AccountPage from "./components/AccountPage";
 // import ExpensesPage from "./components/ExpensesPage";
@@ -14,7 +14,32 @@ import LogsPage from "./components/LogsPage";
 export default function App() {
   const [accounts, setAccountsState] = useState(() => storageModel.getAccounts());
   const [darkMode, setDarkModeState] = useState(() => storageModel.getDarkMode());
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const isChatPage = useRef(false);
+
+   useEffect(() => {
+    isChatPage.current = location.pathname === '/chat';
+  }, [location]);
+
+  // Listen for storage updates
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      // Only update state if we're not on the chat page
+      if (!isChatPage.current) {
+        setAccountsState(storageModel.getAccounts());
+      }
+    };
+
+    window.addEventListener('storageUpdate', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('storageUpdate', handleStorageUpdate);
+    };
+  }, []);
+
+
 
   useEffect(() => {
     // No need to setAccounts here, handled by model functions

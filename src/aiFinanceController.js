@@ -205,72 +205,90 @@ export async function handleFinanceChat(userMessage, chatHistory = []) {
                 const actions = parsed.actions ? parsed.actions : [parsed];
 
                 // Process each action
-                // In the handleFinanceChat function, where actions are processed:
-                const results = [];
+                const actionSummaries = [];
+                let anyError = false;
                 for (const action of actions) {
                     try {
                         switch (action.action) {
                             case "add_transaction":
-                                // For transfers between accounts, we might have multiple add_transaction actions
                                 if (Array.isArray(action)) {
-                                    // Handle array of transactions (for transfers)
                                     for (const tx of action) {
                                         const result = await handleAddTransaction(tx, accounts, accountExists, getAccountName);
-                                        results.push(result);
+                                        actionSummaries.push(result.summary || '');
+                                        if (result.error) anyError = true;
                                     }
                                 } else {
-                                    // Handle single transaction
                                     const result = await handleAddTransaction(action, accounts, accountExists, getAccountName);
-                                    results.push(result);
+                                    actionSummaries.push(result.summary || '');
+                                    if (result.error) anyError = true;
                                 }
                                 break;
-                            case "create_account":
+                            case "create_account": {
                                 if (!action.accountName || typeof action.accountName !== 'string' || action.accountName.trim() === '') {
-                                    results.push({
-                                        chat: "❗ Please provide a valid account name to create an account."
-                                    });
-                                    break;
+                                    return { chat: "❗ Please provide a valid account name to create an account.", error: true };
                                 }
-                                // Prevent duplicate account names (optional, can remove if not needed)
                                 if (accounts.some(a => a.name.toLowerCase() === action.accountName.trim().toLowerCase())) {
-                                    results.push({
-                                        chat: `❗ An account named "${action.accountName}" already exists.`
-                                    });
-                                    break;
+                                    return { chat: `❗ An account named \"${action.accountName}\" already exists.`, error: true };
                                 }
                                 const updated = storageModel.addAccount(action.accountName.trim());
                                 const newAccount = updated[0];
-                                results.push({
-                                    chat: `🆕 Account "${action.accountName}" created successfully! (ID: ${newAccount.id})`,
-                                    account: newAccount
-                                });
-                                // Update accounts for subsequent actions in this loop
                                 accounts = updated;
+                                actionSummaries.push(`Created account \"${action.accountName}\" (ID: ${newAccount.id})`);
                                 break;
-                            // ... other cases remain the same
+                            }
+                            case "delete_account": {
+                                if (!action.accountId || !accounts.some(a => String(a.id) === String(action.accountId))) {
+                                    return { chat: "❗ Please specify a valid account ID to delete.", error: true };
+                                }
+                                const accountName = accounts.find(a => String(a.id) === String(action.accountId))?.name || action.accountId;
+                                const updatedAccounts = storageModel.deleteAccount(action.accountId);
+                                accounts = updatedAccounts;
+                                actionSummaries.push(`Deleted account \"${accountName}\" (ID: ${action.accountId})`);
+                                break;
+                            }
+                            case "ask_user":
+                                actionSummaries.push(action.message || 'Requested clarification from user.');
+                                break;
+                            case "get_accounts":
+                                actionSummaries.push('Fetched account list.');
+                                break;
+                            default:
+                                actionSummaries.push('Performed an action.');
                         }
                     } catch (e) {
                         logger.error("Error processing action", e, { action });
-                        results.push({
-                            chat: `❗ Error processing action: ${e.message || "Unknown error"}`,
-                            error: true
-                        });
+                        anyError = true;
+                        actionSummaries.push(`❗ Error processing action: ${e.message || "Unknown error"}`);
                     }
                 }
 
-
-                // Combine all results into a single response
-                const successfulResults = results.filter(r => !r.error);
-                if (successfulResults.length > 0) {
-                    return {
-                        chat: successfulResults.map(r => r.chat).join("\n\n")
-                    };
-                } else {
-                    return {
-                        chat: results[0]?.chat || "❗ Sorry, I couldn't complete any of the requested actions."
-                    };
+                // After all actions, send a summary to Gemini for the user-facing reply
+                const summaryPrompt = {
+                    contents: [{
+                        parts: [{
+                            text: `The following actions were just performed in a finance app:\n${actionSummaries.map((s, i) => `${i + 1}. ${s}`).join("\n")}\n\nHere is the updated list of accounts: ${JSON.stringify(accounts)}.\n\nReply to the user with a friendly, concise message (in plain text, no JSON) summarizing what happened. Do not mention that you are an AI. Do not include any code or JSON formatting.`
+                        }]
+                    }]
+                };
+                let chatReply = "";
+                try {
+                    const followupRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBYGcNPmwiakoc03KXGZkTXW-btfGt_itk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(summaryPrompt),
+                    });
+                    if (followupRes.ok) {
+                        const followupData = await followupRes.json();
+                        const followupText = followupData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (followupText && typeof followupText === 'string') {
+                            chatReply = followupText.trim();
+                        }
+                    }
+                } catch (e) {
+                    logger.error("Error getting Gemini chat reply for summary", e);
+                    chatReply = actionSummaries.join("\n");
                 }
-
+                return { chat: chatReply };
             } catch (e) {
                 logger.error("Error processing message", e);
                 return {
@@ -290,11 +308,13 @@ export async function handleFinanceChat(userMessage, chatHistory = []) {
     }
 }
 // Helper function for adding transactions
+// Update handleAddTransaction to return a summary string for the summary prompt
 async function handleAddTransaction(parsed, accounts, accountExists, getAccountName) {
     if (!parsed.accountId || !accountExists(parsed.accountId)) {
         accounts = storageModel.getAccounts();
         return {
-            chat: `❗ The account you specified doesn't exist. Available accounts: ${accounts.map(a => `${a.name} (ID: ${a.id})`).join(', ')}`
+            summary: `❗ The account you specified doesn't exist. Available accounts: ${accounts.map(a => `${a.name} (ID: ${a.id})`).join(', ')}`,
+            error: true
         };
     }
 
@@ -333,19 +353,15 @@ async function handleAddTransaction(parsed, accounts, accountExists, getAccountN
         year: 'numeric'
     });
 
+    let summary = '';
     if (isFriendPayment) {
-        return {
-            chat: `💸 Paid ₹${parsed.amount} to friend from ${accountName} on ${dateDisplay}`
-        };
+        summary = `Paid ₹${parsed.amount} to friend from ${accountName} on ${dateDisplay}`;
     } else if (isIncome) {
-        return {
-            chat: `💰 Added income of ₹${parsed.amount} as ${parsed.category || 'salary'} to ${accountName} on ${dateDisplay}`
-        };
+        summary = `Added income of ₹${parsed.amount} as ${parsed.category || 'salary'} to ${accountName} on ${dateDisplay}`;
     } else {
-        return {
-            chat: `💸 Added expense of ₹${parsed.amount} for ${parsed.category || 'expense'} from ${accountName} on ${dateDisplay}`
-        };
+        summary = `Added expense of ₹${parsed.amount} for ${parsed.category || 'expense'} from ${accountName} on ${dateDisplay}`;
     }
+    return { summary };
 }
 
 
