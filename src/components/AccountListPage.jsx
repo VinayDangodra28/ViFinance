@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import AccountForm from "./AccountForm";
 import Analytics from "./Analytics";
 import ConfirmationModal from "./ConfirmationModal";
 
-export default function AccountListPage({ accounts, addAccount, deleteAccount, darkMode }) {
+export default function AccountListPage() {
+  const accounts = useSelector(state => state.accounts);
+  const darkMode = useSelector(state => state.darkMode);
   const navigate = useNavigate();
   const [accountToDelete, setAccountToDelete] = useState(null);
 
@@ -28,7 +31,7 @@ export default function AccountListPage({ accounts, addAccount, deleteAccount, d
 
   return (
     <div className="max-w-7xl mx-auto">
-      <AccountForm addAccount={addAccount} darkMode={darkMode} />
+      <AccountForm />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
         {accounts.map((acc) => {
           const currentBalance = getAccountBalance(acc);

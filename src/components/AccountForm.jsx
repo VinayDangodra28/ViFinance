@@ -1,13 +1,17 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addAccount } from '../features/accounts/accountsSlice';
 import { toast } from 'react-toastify';
 
-export default function AccountForm({ addAccount, darkMode }) {
+export default function AccountForm() {
   const [name, setName] = useState("");
+  const darkMode = useSelector(state => state.darkMode);
+  const dispatch = useDispatch();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (name.trim()) {
-      addAccount(name);
+      dispatch(addAccount(name));
       setName("");
       toast.success(`Account "${name}" added successfully!`);
     }

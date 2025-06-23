@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { useSelector } from 'react-redux';
 
 // Register ChartJS components
 ChartJS.register(
@@ -27,8 +28,10 @@ ChartJS.register(
   Legend
 );
 
-export default function AnalyticsPage({ accounts, darkMode }) {
+export default function AnalyticsPage() {
   const navigate = useNavigate();
+  const accounts = useSelector(state => state.accounts);
+  const darkMode = useSelector(state => state.darkMode);
   const [timeRange, setTimeRange] = useState('month'); // month, quarter, year
   const [selectedAccount, setSelectedAccount] = useState('all');
 
@@ -399,4 +402,4 @@ export default function AnalyticsPage({ accounts, darkMode }) {
       </div>
     </div>
   );
-} 
+}

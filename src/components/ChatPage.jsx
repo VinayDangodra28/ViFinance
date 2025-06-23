@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import storageModel from "../storageModel";
+import { useSelector } from "react-redux";
 import { handleFinanceChat, handleAddAccount, handleDeleteAccount } from "../aiFinanceController";
 
 export default function ChatPage() {
+  const accounts = useSelector(state => state.accounts);
   const [messages, setMessages] = useState([
     {
       sender: "bot",
@@ -11,26 +12,8 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [accounts, setAccounts] = useState([]);
   const [error, setError] = useState(null);
   const chatEndRef = useRef(null);
-
-  // Initialize accounts on component mount
-  useEffect(() => {
-    const initialAccounts = storageModel.getAccounts();
-    setAccounts(initialAccounts);
-
-    // Add initial accounts info to chat if there are accounts
-    if (initialAccounts.length > 0) {
-      setMessages(prev => [
-        ...prev,
-        {
-          sender: "bot",
-          text: `💳 You have ${initialAccounts.length} account(s): ${initialAccounts.map(a => `${a.name} (ID: ${a.id})`).join(", ")}`
-        }
-      ]);
-    }
-  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -60,7 +43,6 @@ export default function ChatPage() {
 
         const res = await handleAddAccount(accountName.trim());
         setMessages(prev => [...prev, { sender: "bot", text: res.chat }]);
-        setAccounts(storageModel.getAccounts());
       }
       // Check if the message is an account deletion request
       else if (userMsg.toLowerCase().startsWith("delete account")) {
@@ -71,13 +53,11 @@ export default function ChatPage() {
 
         const res = await handleDeleteAccount(accountId);
         setMessages(prev => [...prev, { sender: "bot", text: res.chat }]);
-        setAccounts(storageModel.getAccounts());
       }
       // Handle regular finance chat
       else {
         const res = await handleFinanceChat(userMsg, messages);
         setMessages(prev => [...prev, { sender: "bot", text: res.chat }]);
-        setAccounts(storageModel.getAccounts());
       }
     } catch (err) {
       console.error("Error handling message:", err);
@@ -107,7 +87,6 @@ export default function ChatPage() {
         { sender: "user", text: `Create account called ${accountName}` },
         { sender: "bot", text: res.chat }
       ]);
-      setAccounts(storageModel.getAccounts());
     } catch (err) {
       setError(err.message);
       setMessages(prev => [
@@ -154,8 +133,6 @@ export default function ChatPage() {
           <div ref={chatEndRef} />
         </div>
       </div>
-
-      
 
       {/* Input form */}
       <form

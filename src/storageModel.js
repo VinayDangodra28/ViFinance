@@ -6,90 +6,25 @@ const STORAGE_KEYS = {
   DARK_MODE: 'darkMode',
 };
 
-class StorageModel {
+export const getAccounts = () => {
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACCOUNTS)) || [];
+};
 
-    constructor() {
-    this.storageEvent = new Event('storageUpdate');
-  }
+export const setAccounts = (accounts) => {
+  localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+};
 
-  
-  getAccounts() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACCOUNTS)) || [];
-  }
+export const getDarkMode = () => {
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.DARK_MODE)) || false;
+};
 
-  setAccounts(accounts) {
-    localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
-    window.dispatchEvent(this.storageEvent);
-  }
+export const setDarkMode = (darkMode) => {
+  localStorage.setItem(STORAGE_KEYS.DARK_MODE, JSON.stringify(darkMode));
+};
 
-  getDarkMode() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.DARK_MODE)) || false;
-  }
-
-  setDarkMode(darkMode) {
-    localStorage.setItem(STORAGE_KEYS.DARK_MODE, JSON.stringify(darkMode));
-  }
-
-  addAccount(name) {
-    const accounts = this.getAccounts();
-    const newAccount = {
-      id: Date.now(),
-      name,
-      transactions: [],
-      // expenses: []
-    };
-    const updated = [newAccount, ...accounts];
-    this.setAccounts(updated);
-    return updated;
-  }
-
-  deleteAccount(accountId) {
-    const accounts = this.getAccounts();
-    const updated = accounts.filter(acc => acc.id !== accountId);
-    this.setAccounts(updated);
-    return updated;
-  }
-
- addTransaction(accountId, transaction) {
-    const accounts = this.getAccounts();
-    const updated = accounts.map(acc =>
-      acc.id === parseInt(accountId)
-        ? {
-            ...acc,
-            transactions: [
-              {
-                id: Date.now(),
-                amount: transaction.amount,
-                note: transaction.note || '',
-                type: transaction.type, // 'credit' or 'debit'
-                date: new Date(transaction.date).toISOString() // Ensure date is in ISO format
-              },
-              ...acc.transactions,
-            ],
-          }
-        : acc
-    );
-    this.setAccounts(updated);
-    return updated;
-  }
-
-
-  deleteTransaction(accountId, transactionId) {
-    const accounts = this.getAccounts();
-    const updated = accounts.map(acc =>
-      acc.id === accountId
-        ? {
-            ...acc,
-            transactions: acc.transactions.filter(t => t.id !== transactionId),
-          }
-        : acc
-    );
-    this.setAccounts(updated);
-    return updated;
-  }
-
-  // You can add more methods as needed
-}
-
-const storageModel = new StorageModel();
-export default storageModel;
+export default {
+  getAccounts,
+  setAccounts,
+  getDarkMode,
+  setDarkMode,
+};

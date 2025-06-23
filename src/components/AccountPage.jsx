@@ -1,18 +1,23 @@
-import React, { useState } from "react";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { addTransaction, deleteTransaction, deleteAccount } from '../features/accounts/accountsSlice';
+import { toast } from 'react-toastify';
 import { useNavigate, useParams } from "react-router-dom";
 import TransactionForm from "./TransactionForm";
 import Analytics from "./Analytics";
-import { toast } from 'react-toastify';
 import ConfirmationModal from "./ConfirmationModal";
 import CalendarView from "./CalendarView";
 
-export default function AccountPage({ accounts, addTransaction, deleteTransaction, deleteAccount, darkMode }) {
+export default function AccountPage() {
+    const accounts = useSelector(state => state.accounts);
+    const darkMode = useSelector(state => state.darkMode);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const { accountId } = useParams();
     const account = accounts.find((acc) => acc.id === parseInt(accountId));
-    const [transactionToDelete, setTransactionToDelete] = useState(null);
-    const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-    const [viewMode, setViewMode] = useState('calendar');
+    const [transactionToDelete, setTransactionToDelete] = React.useState(null);
+    const [showDeleteAccount, setShowDeleteAccount] = React.useState(false);
+    const [viewMode, setViewMode] = React.useState('calendar');
 
     if (!account) {
         return (
@@ -34,14 +39,15 @@ export default function AccountPage({ accounts, addTransaction, deleteTransactio
     }
 
     const handleDelete = (accountId, transactionId) => {
-        deleteTransaction(accountId, transactionId);
+        dispatch(deleteTransaction({ accountId, transactionId }));
         setTransactionToDelete(null);
         toast.success('Transaction deleted successfully!');
     };
 
     const handleDeleteAccount = () => {
-        deleteAccount(account.id);
+        dispatch(deleteAccount(account.id));
         setShowDeleteAccount(false);
+        navigate('/');
     };
 
     const currentBalance = account.transactions.reduce((sum, trans) => {

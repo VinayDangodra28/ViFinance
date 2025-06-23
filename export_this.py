@@ -36,7 +36,7 @@ def main():
         return
 
     # Add items you want to ignore here
-    ignore_list = ['node_modules', '.git', 'dist', 'build']
+    ignore_list = ['node_modules', '.git', 'dist', 'build', '__pycache__', '.DS_Store', 'cordova', 'README.md', 'package-lock.json', '.gitignore', 'public', 'export_this.py', 'directory_structure.json']
 
     result = get_directory_structure(root_directory, ignore_list)
     result_json = json.dumps(result, indent=4)

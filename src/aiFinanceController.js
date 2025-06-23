@@ -1,5 +1,7 @@
 // src/aiFinanceController.js
 import storageModel from './storageModel';
+import { store } from './store';
+import { addAccount, deleteAccount, addTransaction } from './features/accounts/accountsSlice';
 
 // Enhanced logging utility
 class FinanceLogger {
@@ -377,7 +379,8 @@ async function handleAddTransaction(parsed, accounts, accountExists, getAccountN
         isFriendPayment: isFriendPayment
     };
 
-    storageModel.addTransaction(parsed.accountId, transaction);
+    // REMOVE: storageModel.addTransaction(parsed.accountId, transaction);
+    store.dispatch(addTransaction({ accountId: parsed.accountId, transaction }));
 
     const accountName = getAccountName(parsed.accountId);
     const dateDisplay = new Date(formattedDate).toLocaleDateString('en-IN', {
@@ -437,6 +440,7 @@ async function handleTransfer(parsed, accounts, accountExists, getAccountName) {
         type: "debit", // This is an expense for the source account
         date: formattedDate
     });
+    store.dispatch(addTransaction({ accountId: parsed.fromAccountId, transaction }));
 
     // Create credit transaction for destination account (income)
     storageModel.addTransaction(parsed.toAccountId, {
@@ -445,6 +449,7 @@ async function handleTransfer(parsed, accounts, accountExists, getAccountName) {
         type: "credit", // This is an income for the destination account
         date: formattedDate
     });
+    store.dispatch(addTransaction({ accountId: parsed.toAccountId, transaction }));
 
     const dateDisplay = new Date(formattedDate).toLocaleDateString('en-IN', {
         day: '2-digit',

@@ -1,11 +1,15 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addTransaction } from '../features/accounts/accountsSlice';
 import { toast } from 'react-toastify';
 
-export default function TransactionForm({ accountId, addTransaction, darkMode }) {
+export default function TransactionForm({ accountId }) {
     const [amount, setAmount] = useState("");
     const [note, setNote] = useState("");
     const [type, setType] = useState("debit");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const darkMode = useSelector(state => state.darkMode);
+    const dispatch = useDispatch();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -16,14 +20,13 @@ export default function TransactionForm({ accountId, addTransaction, darkMode })
         }
 
         const transaction = {
-            id: Date.now(),
             amount: parseFloat(amount),
             note,
             type,
             date: new Date(date).toISOString(),
         };
 
-        addTransaction(accountId, transaction);
+        dispatch(addTransaction({ accountId, transaction }));
 
         // Reset form
         setAmount("");
