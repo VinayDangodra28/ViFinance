@@ -1,7 +1,11 @@
 import os
 import subprocess
 import time
+import json
 import xml.etree.ElementTree as ET
+
+
+SIGNING_FILE = "signing_config.json"
 
 
 def run_command(command, cwd=None):
@@ -24,22 +28,53 @@ def get_package_name(config_path):
         raise Exception(f"❌ Error reading config.xml: {e}")
 
 
+def load_or_create_signing_config():
+    if os.path.exists(SIGNING_FILE):
+        with open(SIGNING_FILE, "r") as f:
+            return json.load(f)
+
+    print("🔐 First-time production build. Enter keystore signing info:")
+    config = {
+        "keystore_path": input("Keystore path (e.g., my-release-key.keystore): ").strip(),
+        "alias": input("Key alias (e.g., myalias): ").strip(),
+        "keystore_password": input("Keystore password: ").strip(),
+        "alias_password": input("Key alias password: ").strip(),
+    }
+
+    with open(SIGNING_FILE, "w") as f:
+        json.dump(config, f, indent=2)
+        print(f"✅ Saved signing config to {SIGNING_FILE}")
+    return config
+
+
+def sign_and_align_apk(apk_unsigned_path, apk_output_path, config):
+    print("🔐 Signing APK...")
+    jarsigner_cmd = (
+        f'jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 '
+        f'-keystore "{config["keystore_path"]}" '
+        f'-storepass "{config["keystore_password"]}" '
+        f'-keypass "{config["alias_password"]}" '
+        f'"{apk_unsigned_path}" {config["alias"]}'
+    )
+    run_command(jarsigner_cmd)
+
+    print("📦 Aligning APK...")
+    zipalign_cmd = f'zipalign -v 4 "{apk_unsigned_path}" "{apk_output_path}"'
+    run_command(zipalign_cmd)
+
+    print(f"✅ Production APK ready: {apk_output_path}")
+
+
 def install_apk_to_device(apk_path):
     print("📱 Installing APK to connected Android device...")
-    try:
-        run_command(f'adb install -r "{apk_path}"')
-        print("✅ APK installed successfully!")
-    except Exception as e:
-        print("❌ Failed to install APK:", e)
+    run_command(f'adb install -r "{apk_path}"')
+    print("✅ APK installed successfully!")
 
 
 def launch_app_on_device(package_name):
     print(f"🚀 Launching app {package_name} on device...")
-    try:
-        run_command(f'adb shell monkey -p {package_name} -c android.intent.category.LAUNCHER 1')
-        print("✅ App launched successfully!")
-    except Exception as e:
-        print(f"❌ Failed to launch app: {e}")
+    run_command(f'adb shell monkey -p {package_name} -c android.intent.category.LAUNCHER 1')
+    print("✅ App launched successfully!")
 
 
 def git_commit(repo_path):
@@ -47,22 +82,21 @@ def git_commit(repo_path):
     commit_message = input("Enter git commit message (or leave blank to skip): ").strip()
     if not commit_message:
         print("⚠️ Skipping commit.")
-        return False
+        return
 
     run_command("git add .", cwd=repo_path)
-
     result = subprocess.run("git status --porcelain", shell=True, cwd=repo_path, capture_output=True, text=True)
     if not result.stdout.strip():
         print("ℹ️ Nothing to commit.")
-        return False
+        return
 
     run_command(f'git commit -m "{commit_message}"', cwd=repo_path)
     print("✅ Changes committed.")
-    return True
 
 
-def find_apk(cordova_path):
-    apk_dir = os.path.join(cordova_path, "platforms", "android", "app", "build", "outputs", "apk", "debug")
+def find_apk(cordova_path, build_type="debug"):
+    folder = "release" if build_type == "release" else "debug"
+    apk_dir = os.path.join(cordova_path, "platforms", "android", "app", "build", "outputs", "apk", folder)
     if not os.path.exists(apk_dir):
         raise FileNotFoundError("❌ APK build folder not found.")
 
@@ -72,18 +106,12 @@ def find_apk(cordova_path):
             print(f"📦 Found APK: {apk_path}")
             return apk_path
 
-    raise FileNotFoundError("❌ No APK found in debug folder.")
+    raise FileNotFoundError("❌ No APK found in expected folder.")
 
 
 def open_apk_folder_and_whatsapp(apk_path):
-    try:
-        subprocess.Popen(["cmd", "/c", "start", "whatsapp:"])
-        print("🟢 Opened WhatsApp Desktop.")
-    except Exception as e:
-        print("⚠️ Could not open WhatsApp:", e)
-
+    subprocess.Popen(["cmd", "/c", "start", "whatsapp:"])
     time.sleep(2)
-
     apk_folder = os.path.dirname(apk_path)
     subprocess.run(["explorer", apk_folder])
     print(f"📂 Opened APK folder: {apk_folder}")
@@ -91,32 +119,47 @@ def open_apk_folder_and_whatsapp(apk_path):
 
 def main():
     project_path = os.getcwd()
-    print(f"📁 Current project directory: {project_path}")
-
     cordova_path = os.path.join(project_path, "cordova")
+    config_path = os.path.join(cordova_path, "config.xml")
+
     if not os.path.exists(cordova_path):
         print("❌ 'cordova' folder not found inside the current directory.")
         return
 
-    config_path = os.path.join(cordova_path, "config.xml")
     package_name = get_package_name(config_path)
 
     git_commit(project_path)
 
-    deploy_choice = input("\nWhat would you like to do?\n1️⃣ Install on connected device\n2️⃣ Just open APK folder\nEnter choice (1 or 2): ").strip()
+    choice = input(
+        "\nBuild type?\n1️⃣ Debug (Test on device)\n2️⃣ Production (Signed APK)\nEnter choice (1 or 2): "
+    ).strip()
 
-    if deploy_choice not in ["1", "2"]:
+    print("🏗️ Building React (Vite) app...")
+    run_command("npm run build", cwd=project_path)
+
+    if choice == "1":
+        print("📦 Building Cordova DEBUG APK...")
+        run_command("cordova build android", cwd=cordova_path)
+        apk_path = find_apk(cordova_path, "debug")
+
+    elif choice == "2":
+        print("📦 Building Cordova RELEASE APK...")
+        run_command("cordova build android --release", cwd=cordova_path)
+
+        unsigned_apk = find_apk(cordova_path, "release")
+        output_apk = os.path.join(project_path, "app-release.apk")
+        signing_config = load_or_create_signing_config()
+        sign_and_align_apk(unsigned_apk, output_apk, signing_config)
+
+        apk_path = output_apk
+
+    else:
         print("🚫 Invalid choice. Exiting.")
         return
 
-    print("🏗️ Building Vite project...")
-    run_command("npm run build", cwd=project_path)
-
-    print("📦 Building Cordova APK...")
-    run_command("cordova build android", cwd=cordova_path)
-
-    print("🔍 Locating APK...")
-    apk_path = find_apk(cordova_path)
+    deploy_choice = input(
+        "\nDeploy?\n1️⃣ Install on connected device\n2️⃣ Just open APK folder and WhatsApp\nEnter choice: "
+    ).strip()
 
     if deploy_choice == "1":
         install_apk_to_device(apk_path)
@@ -124,7 +167,7 @@ def main():
     else:
         open_apk_folder_and_whatsapp(apk_path)
 
-    print("\n✅ Done!")
+    print("\n✅ All Done!")
 
 
 if __name__ == "__main__":

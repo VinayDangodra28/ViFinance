@@ -15,3 +15,7 @@ build/
 .vscode/
 *.log
 .DS_Store
+
+
+
+signing_config.json
