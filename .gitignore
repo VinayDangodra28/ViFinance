@@ -21,7 +21,7 @@ build/
 signing_config.json
 
 app.apks
-app-release.apk
+# app-release.apk
 extracted_apks/
 firstkey.keystore
 firstalias.keystore
