@@ -49,9 +49,10 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                 darkMode 
                   ? 'text-white hover:text-blue-400' 
                   : 'text-gray-800 hover:text-blue-600'
-              } text-xl font-bold transition-colors duration-200`}
+              } text-xl font-bold transition-colors duration-200 flex items-center gap-2`}
             >
-              Finance Manager
+              <img src="/ViFinance.svg" alt="ViFinance Logo" className="h-8 w-8" style={{display:'inline'}} />
+              ViFinance
             </Link>
 
             {/* Desktop Navigation */}
