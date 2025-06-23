@@ -2,10 +2,48 @@ import os
 import subprocess
 import time
 import json
+import zipfile
 import xml.etree.ElementTree as ET
 
 
 SIGNING_FILE = "signing_config.json"
+BUNDLETOOL_JAR = "bundletool.jar"  # Make sure this JAR is placed in the root directory
+
+def convert_aab_to_apk(aab_path, config, output_apk_path):
+    print("📦 Converting AAB to installable APK using bundletool...")
+
+    apks_path = "app.apks"
+
+    # Clean previous artifacts
+    if os.path.exists(apks_path):
+        os.remove(apks_path)
+    if os.path.exists("extracted_apks"):
+        import shutil
+        shutil.rmtree("extracted_apks")
+
+    build_apks_cmd = (
+        f'java -jar {BUNDLETOOL_JAR} build-apks '
+        f'--bundle="{aab_path}" '
+        f'--output="{apks_path}" '
+        f'--ks="{config["keystore_path"]}" '
+        f'--ks-key-alias="{config["alias"]}" '
+        f'--ks-pass=pass:{config["keystore_password"]} '
+        f'--key-pass=pass:{config["alias_password"]} '
+        f'--mode=universal '
+        f'--overwrite'
+    )
+    run_command(build_apks_cmd)
+
+    # Extract the universal.apk
+    with zipfile.ZipFile(apks_path, 'r') as zip_ref:
+        zip_ref.extractall('extracted_apks')
+
+    universal_apk_path = os.path.join("extracted_apks", "universal.apk")
+    if not os.path.exists(universal_apk_path):
+        raise Exception("❌ Failed to find universal APK in .apks")
+
+    os.rename(universal_apk_path, output_apk_path)
+    print(f"✅ Converted AAB to APK: {output_apk_path}")
 
 
 def run_command(command, cwd=None):
@@ -47,22 +85,28 @@ def load_or_create_signing_config():
     return config
 
 
-def sign_and_align_apk(apk_unsigned_path, apk_output_path, config):
-    print("🔐 Signing APK...")
-    jarsigner_cmd = (
-        f'jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 '
-        f'-keystore "{config["keystore_path"]}" '
-        f'-storepass "{config["keystore_password"]}" '
-        f'-keypass "{config["alias_password"]}" '
-        f'"{apk_unsigned_path}" {config["alias"]}'
-    )
-    run_command(jarsigner_cmd)
+def sign_and_align_apk(input_path, output_path, config):
+    if input_path.endswith(".apk"):
+        print("🔐 Signing APK...")
+        jarsigner_cmd = (
+            f'jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 '
+            f'-keystore "{config["keystore_path"]}" '
+            f'-storepass "{config["keystore_password"]}" '
+            f'-keypass "{config["alias_password"]}" '
+            f'"{input_path}" {config["alias"]}'
+        )
+        run_command(jarsigner_cmd)
 
-    print("📦 Aligning APK...")
-    zipalign_cmd = f'zipalign -v 4 "{apk_unsigned_path}" "{apk_output_path}"'
-    run_command(zipalign_cmd)
+        print("📦 Aligning APK (zipalign)...")
+        zipalign_cmd = f'zipalign -v 4 "{input_path}" "{output_path}"'
+        run_command(zipalign_cmd)
+        print(f"✅ Signed and aligned APK ready: {output_path}")
 
-    print(f"✅ Production APK ready: {apk_output_path}")
+    elif input_path.endswith(".aab"):
+        convert_aab_to_apk(input_path, config, output_path)
+    else:
+        raise Exception("❌ Unknown file type to sign.")
+
 
 
 def install_apk_to_device(apk_path):
@@ -93,20 +137,23 @@ def git_commit(repo_path):
     run_command(f'git commit -m "{commit_message}"', cwd=repo_path)
     print("✅ Changes committed.")
 
+def find_apk_or_aab(cordova_path, build_type="release"):
+    apk_dir = os.path.join(cordova_path, "platforms", "android", "app", "build", "outputs", "apk", build_type)
+    bundle_dir = os.path.join(cordova_path, "platforms", "android", "app", "build", "outputs", "bundle", build_type)
 
-def find_apk(cordova_path, build_type="debug"):
-    folder = "release" if build_type == "release" else "debug"
-    apk_dir = os.path.join(cordova_path, "platforms", "android", "app", "build", "outputs", "apk", folder)
-    if not os.path.exists(apk_dir):
-        raise FileNotFoundError("❌ APK build folder not found.")
+    # Check for APK first
+    if os.path.exists(apk_dir):
+        for file in os.listdir(apk_dir):
+            if file.endswith(".apk"):
+                return os.path.join(apk_dir, file)
 
-    for file in os.listdir(apk_dir):
-        if file.endswith(".apk"):
-            apk_path = os.path.join(apk_dir, file)
-            print(f"📦 Found APK: {apk_path}")
-            return apk_path
+    # Check for AAB
+    if os.path.exists(bundle_dir):
+        for file in os.listdir(bundle_dir):
+            if file.endswith(".aab"):
+                return os.path.join(bundle_dir, file)
 
-    raise FileNotFoundError("❌ No APK found in expected folder.")
+    raise FileNotFoundError("❌ No APK or AAB found.")
 
 
 def open_apk_folder_and_whatsapp(apk_path):
@@ -140,13 +187,13 @@ def main():
     if choice == "1":
         print("📦 Building Cordova DEBUG APK...")
         run_command("cordova build android", cwd=cordova_path)
-        apk_path = find_apk(cordova_path, "debug")
+        apk_path = find_apk_or_aab(cordova_path, "debug")
 
     elif choice == "2":
         print("📦 Building Cordova RELEASE APK...")
         run_command("cordova build android --release", cwd=cordova_path)
 
-        unsigned_apk = find_apk(cordova_path, "release")
+        unsigned_apk = find_apk_or_aab(cordova_path, "release")
         output_apk = os.path.join(project_path, "app-release.apk")
         signing_config = load_or_create_signing_config()
         sign_and_align_apk(unsigned_apk, output_apk, signing_config)
