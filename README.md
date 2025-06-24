@@ -6,62 +6,54 @@ All data is stored locally to ensure privacy and offline access.
 
 ---
 
-## Features
 
-AI Chat Assistant
+## Key Features
 
-* Interact using plain English or Hinglish
-* Example: "Add ₹500 groceries to Savings"
-* Create or delete accounts, log transactions, get summaries, and ask questions
-* Powered by Gemini API
+### AI Chat Assistant
 
-Account Management
+* Interact with your finances using natural language (e.g.,  *"Add ₹500 groceries to Savings"* ).
+* Supports creating accounts, logging transactions, analyzing trends, and more.
+* Answers questions like *"What did I spend last week?"* or *"What's my balance?"*
+* Powered by the Gemini API with context-aware responses.
+* AI-driven actions are synced directly with the app’s state via Redux.
 
-* Create and manage multiple accounts
-* Transfer funds between accounts
+### Account & Transaction Management
 
-Transaction Tracking
+* Create, edit, and delete multiple accounts.
+* Log income and expense transactions with descriptions and categories.
+* Transfer funds between accounts.
 
-* Add, edit, or delete income and expenses
-* View and search transaction history
+### Visual Analytics
 
-Analytics
+* View categorized breakdowns of income and expenses using Chart.js.
+* Identify trends and patterns through dynamic financial charts.
 
-* Visual breakdowns using Chart.js
-* Filterable summaries and insights
+### Action Logs
 
-Logs
+* Maintain a detailed log of all user actions and system events.
+* Useful for debugging and transparency.
 
-* View system actions and errors
-* Helpful for debugging and tracking
+### Platform Support
 
-Mobile Ready
-
-* Cordova support for Android builds
-* Light and dark theme with saved preference
-* Works offline with localStorage
+* Responsive web interface with dark/light mode (saved preference).
+* Mobile-ready with Cordova integration and Android build configuration.
+* LocalStorage-based persistence—fully offline and private.
 
 ---
 
 ## Tech Stack
 
-Frontend: React 19, Vite, TailwindCSS
-
-State Management: Redux Toolkit, React-Redux
-
-Routing: React Router DOM
-
-Charts: Chart.js (via react-chartjs-2)
-
-Icons: Lucide React, React Icons
-
-AI: Gemini API
-
-Mobile: Cordova (Android supported)
+| Category         | Technologies                      |
+| ---------------- | --------------------------------- |
+| Frontend         | React 19, Vite, TailwindCSS       |
+| State Management | Redux Toolkit, React-Redux        |
+| Routing          | React Router DOM                  |
+| Charts           | Chart.js, react-chartjs-2         |
+| Icons            | Lucide React, React Icons         |
+| AI Integration   | Gemini API                        |
+| Mobile Support   | Cordova (Android build supported) |
 
 ---
-
-## Getting Started
 
 ## Project Structure
 
@@ -80,6 +72,11 @@ Mobile: Cordova (Android supported)
 └── package.json           </span><span># Dependencies</span><span>
 </span></span></code></div></div></pre>
 
+1. `cordova/platforms/android/app/build/outputs/apk/`
+
+---
+
+## Getting Started
 
 Development (Web)
 
@@ -111,11 +108,13 @@ Android Build
 
 ---
 
+
 ## Customization
 
-* Gemini API key setup: `src/aiFinanceController.js`
-* Add new features via Redux slices in `src/features/`
-* Update icons and splash screens in Cordova `config.xml`
+* Add your **Gemini API key** in a `.env` file as `VITE_GEMINI_API_KEY=your_key_here` (see `.env.example`).
+* The `.env` file is excluded from version control for security.
+* Extend Redux by adding new slices under `src/features/`
+* Update splash screens and icons in Cordova's `config.xml`
 
 ---
 

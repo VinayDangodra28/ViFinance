@@ -3,6 +3,9 @@ import storageModel from './storageModel';
 import { store } from './store';
 import { addAccount, deleteAccount, addTransaction } from './features/accounts/accountsSlice';
 
+// Read Gemini API key from environment variable (Vite exposes import.meta.env)
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
 // Enhanced logging utility
 class FinanceLogger {
     constructor() {
@@ -187,7 +190,7 @@ export async function handleFinanceChat(userMessage, chatHistory = []) {
             const prompt = getGeminiPrompt(userMessage, context, accounts);
 
             try {
-                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBYGcNPmwiakoc03KXGZkTXW-btfGt_itk', {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -307,7 +310,7 @@ export async function handleFinanceChat(userMessage, chatHistory = []) {
                 };
                 let chatReply = "";
                 try {
-                    const followupRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBYGcNPmwiakoc03KXGZkTXW-btfGt_itk', {
+                    const followupRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(summaryPrompt),

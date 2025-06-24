@@ -16,7 +16,7 @@ build/
 *.log
 .DS_Store
 
-
+.env
 
 signing_config.json
 
